@@ -47,7 +47,8 @@ def get_words_from_top_topics(topic_list, model):
 
 possible_pun_titles = ['Topical puns. On demand.',
                        'Your puns. Your pace.',
-                       'Puns you can hardly understand.']
+                       'Puns you can hardly understand.',
+                       'Poorly generated puns for the people.']
 
 @app.route('/')
 

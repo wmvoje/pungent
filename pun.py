@@ -6,11 +6,14 @@ import cmudict
 import nltk
 from random import shuffle
 
-
 from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
 from nltk.stem.wordnet import WordNetLemmatizer
-from gensim.models.ldamodel import LdaModel as Lda
-from gensim import corpora
+from nltk import word_tokenize
+from nltk import pos_tag
+import enchant
+spelling_dict = enchant.Dict("en_US")
+stemmer = PorterStemmer()
 
 stop = set(stopwords.words('english'))
 lemma = WordNetLemmatizer()
@@ -129,8 +132,70 @@ def phonetic_distance(word1, word2):
     return edit_distance(phoneme1, phoneme2)
 
 
-def tokenize(doc):
-    stop_free  = " ".join([i for i in doc.lower().split() if i not in stop])
-    normalized = " ".join(lemma.lemmatize(word,'v') for word in stop_free.split())
-    x = normalized.split()
-    return x
+import os
+import random
+import codecs
+from collections import defaultdict
+
+from gensim.models.ldamodel import LdaModel as Lda
+from gensim import corpora
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
+from nltk.stem.wordnet import WordNetLemmatizer
+from nltk import word_tokenize
+from nltk import pos_tag
+
+import enchant
+spelling_dict = enchant.Dict("en_US")
+
+stop = set(stopwords.words('english'))
+lemma = WordNetLemmatizer()
+stemmer = PorterStemmer()
+
+stemmed_dict = defaultdict(set)
+
+def stem_and_update_stem_dict(tokens):
+    output_list = []
+    for token in tokens:
+        stemmed = stemmer.stem(token)
+        if stemmed != token:
+            stemmed_dict[stemmed].add(token)
+        output_list.append(stemmed)
+    return output_list
+
+list_of_POS_to_ignore = ['WRB', 'WP$', 'WP',  'WDT', 'UH',
+                         'TO', 'RP', 'RBS', 'RBR', 'PRP$', 'PRP',
+                        'MD', 'JJS', 'JJR', 'JJ', 'IN', 'FW', 'EX',
+                         'DT', 'CD']
+
+# Function to remove stop words from sentences & lemmatize verbs.
+def tokenize(doc, stem=True, initial_word_split=True):
+    if initial_word_split:
+        tokens = word_tokenize(doc)
+    else:
+        tokens = doc
+    #removing stop words
+    tokens = [i for i in tokens if i not in stop]
+    # removing pos data
+    tokens = [word for word, pos in pos_tag(tokens) if pos not in list_of_POS_to_ignore]
+    # Removing improperly spelled words (pronouns must be capitalized to be spelled right)
+    tokens = [word for word in tokens if spelling_dict.check(word)]
+    # lowercase
+    tokens = [word.lower() for word in tokens]
+    # lemmatized
+    tokens = [lemma.lemmatize(word, 'v') for word in tokens]
+    # removing short words
+    tokens = [s for s in tokens if len(s) > 2]
+    # stemmed
+    if stem:
+        tokens = [stemmer.stem(s) for s in tokens]
+
+    return tokens
+
+
+
+list_of_POS_to_ignore = ['WRB', 'WP$', 'WP',  'WDT', 'UH',
+                         'TO', 'RP', 'RBS', 'RBR', 'PRP$', 'PRP',
+                        'MD', 'JJS', 'JJR', 'JJ', 'IN', 'FW', 'EX',
+                         'DT', 'CD']
+
