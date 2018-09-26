@@ -21,35 +21,37 @@ lemma = WordNetLemmatizer()
 phone_dict = nltk.corpus.cmudict.dict()
 
 
-def insert_pun(sentence, possible_words, max_distance = 2):
-    best_distance = max_distance
-    best_index = None
-    best_word = None
+def enumerate_PD_pun_subs(sentence, possible_words, max_distance=4, max_return=10):
+    """
+    Takes a sentence and possible words and creates returns an array of possible
+    pun substituions based on phonetic distance
+    """
+    output = []
     sentence_words = list(sentence.split())
     for word_index, word in enumerate(sentence_words):
-        shuffle(possible_words)
         for pos_word in possible_words:
             if pos_word in word:
                 # This substituion would be meaningless
                 continue
+
             dist = phonetic_distance(word, pos_word)
-#
-            if dist <= best_distance:
+            if dist <= max_distance:
                 # Decrease the distance
-                best_distance += -1
-                best_index = word_index
-                best_word = pos_word
+                output.append((pos_word, word_index, dist))
+    output.sort(key=lambda tup: tup[2])
+    return output
 
-    if best_word is None:
-        return 'Sorry, no pun found!'
 
-    sentence_words[best_index] = best_word
-
+def substitute_pun(sentence, sub_tuple):
+    """Takes a sentence
+    and a touple of (word, index, and score)
+    and makes a sentence
+    """
+    sentence_words = list(sentence.split())
+    sentence_words[sub_tuple[1]] = sub_tuple[0]
     return ' '.join(word for word in sentence_words)
 
-# extracting phones from words and sentences
 
-# consider using metaphonedoble instead of this library
 
 def word_to_phoneme(word):
     """Converts a word to a list of phones"""
@@ -164,7 +166,7 @@ def stem_and_update_stem_dict(tokens):
     return output_list
 
 list_of_POS_to_ignore = ['WRB', 'WP$', 'WP',  'WDT', 'UH',
-                         'TO', 'RP', 'RBS', 'RBR', 'PRP$', 'PRP',
+                         'TO', 'RP', 'RBS', 'RB', 'RBR', 'PRP$', 'PRP',
                         'MD', 'JJS', 'JJR', 'JJ', 'IN', 'FW', 'EX',
                          'DT', 'CD']
 
@@ -193,9 +195,34 @@ def tokenize(doc, stem=True, initial_word_split=True):
     return tokens
 
 
+### Depreciated probably #####
 
-list_of_POS_to_ignore = ['WRB', 'WP$', 'WP',  'WDT', 'UH',
-                         'TO', 'RP', 'RBS', 'RBR', 'PRP$', 'PRP',
-                        'MD', 'JJS', 'JJR', 'JJ', 'IN', 'FW', 'EX',
-                         'DT', 'CD']
+def insert_pun(sentence, possible_words, max_distance = 2):
+    best_distance = max_distance
+    best_index = None
+    best_word = None
+    sentence_words = list(sentence.split())
+    for word_index, word in enumerate(sentence_words):
+        # shuffle(possible_words)
+        for pos_word in possible_words:
+            if pos_word in word:
+                # This substituion would be meaningless
+                continue
+            dist = phonetic_distance(word, pos_word)
+#
+            if dist <= best_distance:
+                # Decrease the distance
+                best_distance += -1
+                best_index = word_index
+                best_word = pos_word
 
+    if best_word is None:
+        return 'Sorry, no pun found!'
+
+    sentence_words[best_index] = best_word
+
+    return ' '.join(word for word in sentence_words)
+
+# extracting phones from words and sentences
+
+# consider using metaphonedoble instead of this library
