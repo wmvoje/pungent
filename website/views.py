@@ -5,7 +5,7 @@ from flask import redirect, url_for
 # from sqlalchemy import create_engine
 # from sqlalchemy_utils import database_exists, create_database
 import pandas as pd
-import psycopg2
+# import psycopg2
 import random
 import csv
 
