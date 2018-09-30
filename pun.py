@@ -12,6 +12,14 @@ from nltk.stem.wordnet import WordNetLemmatizer
 from nltk import word_tokenize
 from nltk import pos_tag
 import enchant
+import pickle
+from gensim.models import doc2vec
+from gensim.utils import simple_preprocess
+from gensim.models.ldamodel import LdaModel as Lda
+import re
+
+
+
 spelling_dict = enchant.Dict("en_US")
 stemmer = PorterStemmer()
 
@@ -20,6 +28,121 @@ lemma = WordNetLemmatizer()
 
 phone_dict = nltk.corpus.cmudict.dict()
 
+# load in models and features
+
+wiki_topicmodel = Lda.load('models/180924_wikipedia_model.stemmed.individually_binned.200.gensim.')
+
+# loading the stemmed_dict
+with open('180922_stemmed_dict.p', 'rb') as tounpick:
+    stemmed_dict = pickle.load(tounpick)
+
+# Loading the doc2vec
+wiki_doc2vec = doc2vec.Doc2Vec.load('models/simple_wiki_chunked_doc2vec')
+
+# loading the doc2vec corpus
+with open('models/simple_wiki_chunked_corpus.p', 'rb') as tounpcik:
+    wiki_doc2vec_corpus = pickle.load(tounpcik)
+
+### Functions for generating puns
+
+
+def split_text(string):
+    return re.findall(r"[\w']+|[.,!?;]", string)
+
+
+
+def generate_possible_pun_substitutions(context, input_sentence, w2v_number=4):
+    """
+    Takes context and input sentence
+
+    returns list of possible substitutions with scores and the topic
+    words consdiered
+
+    """
+
+    # First process context
+    doc2vec_word_generator = sentence_to_doc2vec(context, wiki_doc2vec)
+    topic_words, topic_score = sentence_to_topicmodel_words(context, wiki_topicmodel)
+
+    # Then try to generate sentences using these metrics
+    output = []
+    topic_words_considered = []
+
+    # consider word2vec words
+    for i in range(w2v_number):
+        words, w2v_score = next(doc2vec_word_generator)
+
+        topic_words_considered.extend([[word, 'doc2vec', i+1, w2v_score] for word in words])
+
+        sub_tuples = enumerate_PD_pun_subs(input_sentence, words)
+        # word, sub_index, phonetic_distance
+
+        for word, sub_index, phon_dist in sub_tuples:
+            output.append([word, sub_index, phon_dist, 'doc2vec', i+1, w2v_score, phon_dist/w2v_score])
+
+    # Now do topic words
+    sub_tuples = enumerate_PD_pun_subs(input_sentence, topic_words)
+    for word, sub_index, phon_dist in sub_tuples:
+
+        topic_words_considered.append([word, 'topicModel', 1, topic_score])
+
+        output.append([word, sub_index, phon_dist, 'topicModel', 1, topic_score, phon_dist/topic_score])
+
+    output.sort(key=lambda x: x[6])
+
+    return output, topic_words_considered
+
+def get_words_from_top_topic(topic_list, model, min_word_prob=0.05):
+    """
+    First finding all of the words
+    """
+
+    list_of_words = []
+    topic_list.sort(key=lambda tup: tup[1], reverse=True)
+
+    topic, topic_prob = topic_list[0]
+
+    for word_id, word_prob in model.get_topic_terms(topic, 100):
+        if word_prob < min_word_prob:
+            break
+        if model.id2word[word_id] in stemmed_dict:
+            for word in stemmed_dict[model.id2word[word_id]]:
+                list_of_words.append(word)
+        else:
+            list_of_words.append(model.id2word[word_id])
+
+
+    return list_of_words, topic_prob
+
+
+def sentence_to_topicmodel_words(sentence, model):
+    """
+    Returns a list of words and the rank of the topic model
+    """
+    context_tokens = tokenize(sentence)
+    bag_of_words = model.id2word.doc2bow(context_tokens)
+    document_topics = model.get_document_topics(bag_of_words)
+    return get_words_from_top_topic(document_topics, model)
+
+def sentence_to_doc2vec(text, model):
+    """
+    Iterator which spits out words that are found in
+    the most 'topical' textual elements
+    """
+    # parse the sentence
+    text = simple_preprocess(text)
+    # Find the respective doc2vec vector
+    text_vector = model.infer_vector(text)
+    # find the most similar text pieces
+    most_similar_documents_with_score = model.docvecs.most_similar([text_vector])
+
+    for document_id, cosine_sim_score in most_similar_documents_with_score:
+
+        yield (set(tokenize(wiki_doc2vec_corpus[document_id], stem=False,
+                                initial_word_split=False)), cosine_sim_score)
+
+
+
 
 def enumerate_PD_pun_subs(sentence, possible_words, max_distance=4, max_return=10):
     """
@@ -27,7 +150,7 @@ def enumerate_PD_pun_subs(sentence, possible_words, max_distance=4, max_return=1
     pun substituions based on phonetic distance
     """
     output = []
-    sentence_words = list(sentence.split())
+    sentence_words = list(split_text(sentence))
     for word_index, word in enumerate(sentence_words):
         for pos_word in possible_words:
             if pos_word in word:
@@ -47,7 +170,7 @@ def substitute_pun(sentence, sub_tuple):
     and a touple of (word, index, and score)
     and makes a sentence
     """
-    sentence_words = list(sentence.split())
+    sentence_words = list(split_text(sentence))
     sentence_words[sub_tuple[1]] = sub_tuple[0]
     return ' '.join(word for word in sentence_words)
 
@@ -64,7 +187,7 @@ def sentence_to_word_of_phoneme(sentence):
     """takes string sentence and returns
     list of lists of composing phones"""
     return [word_to_phoneme(word) for
-            word in sentence.lower().split()]
+            word in split_text(sentence.lower())]
 
 def subfinder_bool(mylist, pattern):
     """if a subpattern is in a list return
@@ -201,7 +324,7 @@ def insert_pun(sentence, possible_words, max_distance = 2):
     best_distance = max_distance
     best_index = None
     best_word = None
-    sentence_words = list(sentence.split())
+    sentence_words = list(split_text(sentence))
     for word_index, word in enumerate(sentence_words):
         # shuffle(possible_words)
         for pos_word in possible_words:

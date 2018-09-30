@@ -27,7 +27,13 @@
             <li class="nav-item">
               <a class="nav-link" href="#">About</a>
             </li>
-
+            <li class="nav-item">
+              <a class="nav-link" href="#">Services</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Contact</a>
+            </li>
+          </ul>
         </div>
       </div>
     </nav>
@@ -35,7 +41,7 @@
 
 
     <div class="container">
-      <form action='/output' method="GET">
+      <form action='/index' method="POST">
       <div class="row">
         <div class="col-lg-12 text-center">
           <h1 class="mt-5">{{title}}</h1>
@@ -50,7 +56,7 @@
           <h5 class="text-left">Seed sentence</h5>
           <div class="input-group mb-3">
             <textarea name="input_sentence" class="form-control animated" placeholder="Template sentence">{{input_sentence}}</textarea>
-
+<!--             <input name="input_sentence", type="text" class="form-control" placeholder="Template sentence" aria-label="input_sentence" aria-describedby="basic-addon2"> -->
             <div class="input-group-append">
               <!-- <button class="btn btn-outline-secondary" type="button">Submit!</button> -->
             </div>
@@ -64,7 +70,51 @@
           </div>
 
 
+<div class="col-xs-12" style="height:10px;"></div>
+   <h3 class="text-center" >Pick your favorite pungent pun!</h3>
 
+
+<div class="container">
+
+<!-- <form action='/index' method="GET"> -->
+<div class="row">
+    <div class="col-sm-3">
+    <div class="card">
+      <div class="card-body">
+        <p class="card-text">{{output_sentence}}</p>
+        <a href="{{url_for("index", favorite=0)}}" class="btn btn-outline-secondary">My favorite!</a>
+      </div>
+    </div>
+  </div>
+    <div class="col-sm-3">
+    <div class="card">
+      <div class="card-body">
+        <p class="card-text">{{output_sentence}}</p>
+                <a href="{{url_for("index", favorite=1)}}" class="btn btn-outline-secondary">My favorite!</a>
+      </div>
+    </div>
+  </div>
+    <div class="col-sm-3">
+    <div class="card">
+      <div class="card-body">
+        <p class="card-text">{{output_sentence}}</p>
+                <a href="{{url_for("index", favorite=2)}}" class="btn btn-outline-secondary">My favorite!</a>
+      </div>
+    </div>
+  </div>
+    <div class="col-sm-3">
+    <div class="card">
+      <div class="card-body">
+        <p class="card-text">{{output_sentence}}</p>
+                <a href="{{url_for("index", favorite=3)}}" class="btn btn-outline-secondary">My favorite!</a>
+      </div>
+    </div>
+  </div>
+</div>
+   <!-- </form> -->
+
+
+        </div>
 
       <!-- Bootstrap core JavaScript -->
       <script src="vendor/jquery/jquery.min.js"></script>
