@@ -2,7 +2,6 @@
 """
 # Imports
 
-import cmudict
 import nltk
 from random import shuffle
 
