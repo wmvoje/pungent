@@ -30,17 +30,17 @@ phone_dict = nltk.corpus.cmudict.dict()
 
 # load in models and features
 
-wiki_topicmodel = Lda.load('models/180924_wikipedia_model.stemmed.individually_binned.200.gensim.')
+wiki_topicmodel = Lda.load('models/180925_wikipedia_model.individually_binned.200.gensim.')
 
 # loading the stemmed_dict
 with open('180922_stemmed_dict.p', 'rb') as tounpick:
     stemmed_dict = pickle.load(tounpick)
 
 # Loading the doc2vec
-wiki_doc2vec = doc2vec.Doc2Vec.load('models/simple_wiki_chunked_doc2vec')
+wiki_doc2vec = doc2vec.Doc2Vec.load('models/simple_wiki_chunked_doc2vec_300_vector_10_min_word')
 
 # loading the doc2vec corpus
-with open('models/simple_wiki_chunked_corpus.p', 'rb') as tounpcik:
+with open('models/simple_wiki_chunked_corpus_10_count_cutoff.p', 'rb') as tounpcik:
     wiki_doc2vec_corpus = pickle.load(tounpcik)
 
 ### Functions for generating puns
