@@ -7,5 +7,4 @@ import os
 if not os.path.exists('/tmp/log.csv'):
     os.mknod('/tmp/log.csv')
 
-
 app.run(debug=True)
