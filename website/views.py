@@ -79,7 +79,7 @@ def example1():
 
     context = "The domestic cat (Felis silvestris catus or Felis catus)[1][4] is a small, typically furry, carnivorous mammal. They are often called house cats[5] when kept as indoor pets or simply cats when there is no need to distinguish them from other felids and felines. They are often valued by humans for companionship and for their ability to hunt vermin. There are more than seventy cat breeds recognized by various cat registries."
 
-    input_sentence = "Let us keep this between the two of us."
+    input_sentence = "Please! lets keep this just between the two of us."
     return render_template('index.html',
                             title = title,
                             text_context=context,
