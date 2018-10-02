@@ -75,7 +75,7 @@ def sentence_to_doc2vec(text, model):
 
         words_with_tf_score = tf_idf_of_document(document_id, tf_idf_model,
                                                  tf_idf_dict, tf_idf_corpus,
-                                                 tf_idf_cutoff=0.08)
+                                                 tf_idf_cutoff=0.07)
 
 
 
