@@ -15,6 +15,8 @@ import pickle
 from gensim.models import doc2vec
 from gensim.utils import simple_preprocess
 from gensim.models.ldamodel import LdaModel as Lda
+from gensim.models import TfidfModel
+from gensim.corpora import Dictionary
 import re
 
 
@@ -42,7 +44,58 @@ wiki_doc2vec = doc2vec.Doc2Vec.load('models/simple_wiki_chunked_doc2vec_300_vect
 with open('models/simple_wiki_chunked_corpus_10_count_cutoff.p', 'rb') as tounpcik:
     wiki_doc2vec_corpus = pickle.load(tounpcik)
 
+# loading the TF-IDF information
+tf_idf_dict = Dictionary.load('models/TF-IDF_dict.D')
+
+# loading the TF-IDF model
+tf_idf_model = TfidfModel.load('models/TF-IDF_model')
+
+# loading the corpus
+with open('models/TF-IDF_corpus.p', 'rb') as tounpick:
+    tf_idf_corpus = pickle.load(tounpick)
+
 ### Functions for generating puns
+
+
+def sentence_to_doc2vec(text, model):
+    """
+    Iterator which spits out words that are found in
+    the most 'topical' textual elements
+    """
+    # parse the sentence
+    text = simple_preprocess(text)
+    # Find the respective doc2vec vector
+    text_vector = model.infer_vector(text)
+    # find the most similar text pieces
+    most_similar_documents_with_score = model.docvecs.most_similar([text_vector])
+
+    for document_id, cosine_sim_score in most_similar_documents_with_score:
+
+        ## Calculate the TF-IDF for the document
+
+        words_with_tf_score = tf_idf_of_document(document_id, tf_idf_model,
+                                                 tf_idf_dict, tf_idf_corpus,
+                                                 tf_idf_cutoff=0.08)
+
+
+
+        yield (words_with_tf_score, cosine_sim_score)
+
+
+def tf_idf_of_document(document_id, model, dictionary, corpus, tf_idf_cutoff=0.07):
+
+    # get the tf idf from the document id
+    tf_idf = model[corpus[document_id]]
+#     tf_idf.sort(key=lambda x: x[1])
+
+    output = []
+    tf_idf_value = None
+    for index, tf_idf_value in tf_idf:
+        if tf_idf_value > tf_idf_cutoff:
+            output.append((dictionary.id2token[index], tf_idf_value))
+
+    return output
+
 
 
 def split_text(string):
@@ -50,7 +103,7 @@ def split_text(string):
 
 
 
-def generate_possible_pun_substitutions(context, input_sentence, w2v_number=4):
+def generate_possible_pun_substitutions(context, input_sentence, w2v_number=10):
     """
     Takes context and input sentence
 
@@ -68,28 +121,79 @@ def generate_possible_pun_substitutions(context, input_sentence, w2v_number=4):
     topic_words_considered = []
 
     # consider word2vec words
+    list_of_words = []
     for i in range(w2v_number):
         words, w2v_score = next(doc2vec_word_generator)
 
-        topic_words_considered.extend([[word, 'doc2vec', i+1, w2v_score] for word in words])
+        # incoperate TF-IDF information
 
-        sub_tuples = enumerate_PD_pun_subs(input_sentence, words)
-        # word, sub_index, phonetic_distance
 
-        for word, sub_index, phon_dist in sub_tuples:
-            output.append([word, sub_index, phon_dist, 'doc2vec', i+1, w2v_score, phon_dist/w2v_score])
+        topic_words_considered.extend([[word, 'doc2vec', i+1, tf_score*w2v_score, w2v_score, tf_score]
+                                        for word, tf_score in words])
+
+
+    #### REMOVE DUPLICATE WORDS
+    list_of_words = []
+    topic_words_filtered = []
+    for out in topic_words_considered:
+        if out[0] in list_of_words:
+            continue
+        else:
+            list_of_words.append(out[0])
+            topic_words_filtered.append(out)
+
+
+    # generate all of the substituions
+    sub_tuples = enumerate_PD_pun_subs_w2v(input_sentence, topic_words_filtered)
+    # word, sub_index, phonetic_distance
+
+    for word, sub_index, phon_dist, score, group in sub_tuples:
+        output.append([word, sub_index, phon_dist, 'doc2vec',
+                       group, score, score/phon_dist])
+
+
 
     # Now do topic words
-    sub_tuples = enumerate_PD_pun_subs(input_sentence, topic_words)
-    for word, sub_index, phon_dist in sub_tuples:
+    # sub_tuples = enumerate_PD_pun_subs(input_sentence, topic_words)
+    # for word, sub_index, phon_dist in sub_tuples:
 
-        topic_words_considered.append([word, 'topicModel', 1, topic_score])
+    #     topic_words_considered.append([word, 'topicModel', 1, topic_score])
 
-        output.append([word, sub_index, phon_dist, 'topicModel', 1, topic_score, phon_dist/topic_score])
+    #     output.append([word, sub_index, phon_dist, 'topicModel', 1, topic_score, phon_dist/topic_score])
 
     output.sort(key=lambda x: x[6])
 
-    return output, topic_words_considered
+    output.reverse()
+
+    return output, topic_words_filtered
+
+
+def enumerate_PD_pun_subs_w2v(sentence, possible_words_with_score,
+                              max_distance=4, max_return=10):
+    """
+    Takes a sentence and possible words and creates returns an array of possible
+    pun substituions based on phonetic distance
+    """
+    output = []
+    sentence_words = list(split_text(sentence))
+
+    for word_index, word in enumerate(sentence_words):
+        for word_vec in possible_words_with_score:
+            pos_word = word_vec[0]
+            group = word_vec[2]
+            score = word_vec[3]
+
+            if pos_word in word:
+                # This substituion would be meaningless
+                continue
+
+            dist = phonetic_distance(word, pos_word)
+            if dist <= max_distance:
+                # Decrease the distance
+                output.append((pos_word, word_index, dist, score, group))
+    # output.sort(key=lambda tup: tup[2])
+    return output
+
 
 def get_words_from_top_topic(topic_list, model, min_word_prob=0.05):
     """
@@ -122,23 +226,6 @@ def sentence_to_topicmodel_words(sentence, model):
     bag_of_words = model.id2word.doc2bow(context_tokens)
     document_topics = model.get_document_topics(bag_of_words)
     return get_words_from_top_topic(document_topics, model)
-
-def sentence_to_doc2vec(text, model):
-    """
-    Iterator which spits out words that are found in
-    the most 'topical' textual elements
-    """
-    # parse the sentence
-    text = simple_preprocess(text)
-    # Find the respective doc2vec vector
-    text_vector = model.infer_vector(text)
-    # find the most similar text pieces
-    most_similar_documents_with_score = model.docvecs.most_similar([text_vector])
-
-    for document_id, cosine_sim_score in most_similar_documents_with_score:
-
-        yield (set(tokenize(wiki_doc2vec_corpus[document_id], stem=False,
-                                initial_word_split=False)), cosine_sim_score)
 
 
 
