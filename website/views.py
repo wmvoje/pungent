@@ -145,7 +145,7 @@ def output():
 
     append_row(log_file, log_output)
 
-    words_to_print = convert_topic_words_to_print(topic_words_considered)
+    # words_to_print = convert_topic_words_to_print(topic_words_considered)
 
     topic_words_considered.sort(key=lambda x: x[3])
     topic_words_considered.reverse()
