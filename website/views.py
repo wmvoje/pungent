@@ -147,6 +147,10 @@ def output():
 
     words_to_print = convert_topic_words_to_print(topic_words_considered)
 
+    topic_words_considered.sort(key=lambda x: x[3])
+    topic_words_considered.reverse()
+
+    words_to_print = [words[0] for words in topic_words_considered]
 
     return render_template('output.html',
                            title = random.choice(possible_pun_titles),
@@ -168,3 +172,4 @@ def convert_topic_words_to_print(topic_words):
         output[topic_number-1].append(topic[0])
 
     return output
+

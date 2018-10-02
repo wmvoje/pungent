@@ -93,13 +93,10 @@
 </form>
 
 
-<h4 class="text-left" >Pungent works by extracting topical words. Here are the group of words that it considered.</h4>
+<h4 class="text-left" >Pungent works by extracting topical words. Here are the words it considered for you!</h4>
 
 {% for m in considered_words %}
-<h6 class="text-left" >=======================================</h6>
-{% for p in m %}
-<span class="badge badge-primary">{{p}}</span>
-{% endfor %}
+<span class="badge badge-primary">{{m}}</span>
 {% endfor %}
 
 

@@ -103,7 +103,7 @@ def split_text(string):
 
 
 
-def generate_possible_pun_substitutions(context, input_sentence, w2v_number=10):
+def generate_possible_pun_substitutions(context, input_sentence, w2v_number=5):
     """
     Takes context and input sentence
 
