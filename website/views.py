@@ -47,9 +47,11 @@ log_file = 'log.csv'
 
 possible_pun_titles = ['Topical puns. On demand.',
                        'Your puns. Your pace.',
-                       'Puns you can hardly understand.',
-                       'Poorly generated puns for the people.']
+                       'Machine puns for your parents and friends.']
 
+# ,
+#                        'Puns you can hardly understand.',
+#                        'Poorly generated puns for the people.'
 
 @app.route('/')
 @app.route('/index')

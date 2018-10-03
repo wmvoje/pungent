@@ -38,7 +38,7 @@ with open('180922_stemmed_dict.p', 'rb') as tounpick:
     stemmed_dict = pickle.load(tounpick)
 
 # Loading the doc2vec
-wiki_doc2vec = doc2vec.Doc2Vec.load('models/simple_wiki_chunked_doc2vec_300_vector_10_min_word')
+wiki_doc2vec = doc2vec.Doc2Vec.load('models/simple_wiki_chunked_doc2vec_300_vector_10_min_word_800epochs')
 
 # loading the doc2vec corpus
 with open('models/simple_wiki_chunked_corpus_10_count_cutoff.p', 'rb') as tounpcik:
