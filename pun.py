@@ -64,10 +64,17 @@ def sentence_to_doc2vec(text, model):
     """
     # parse the sentence
     text = simple_preprocess(text)
+    # print(text)
     # Find the respective doc2vec vector
-    text_vector = model.infer_vector(text)
+    text_vector = model.infer_vector(text, epochs=1000)
     # find the most similar text pieces
+    # print(text_vector)
     most_similar_documents_with_score = model.docvecs.most_similar([text_vector])
+
+    # most_similar_documents_with_score.sort(key=lambda x: x[1])
+    # most_similar_documents_with_score.reverse()
+    # print(len(most_similar_documents_with_score))
+    # print(most_similar_documents_with_score)
 
     for document_id, cosine_sim_score in most_similar_documents_with_score:
 
@@ -89,7 +96,7 @@ def tf_idf_of_document(document_id, model, dictionary, corpus, tf_idf_cutoff=0.0
 #     tf_idf.sort(key=lambda x: x[1])
 
     output = []
-    tf_idf_value = None
+
     for index, tf_idf_value in tf_idf:
         if tf_idf_value > tf_idf_cutoff:
             output.append((dictionary.id2token[index], tf_idf_value))
@@ -114,7 +121,7 @@ def generate_possible_pun_substitutions(context, input_sentence, w2v_number=5):
 
     # First process context
     doc2vec_word_generator = sentence_to_doc2vec(context, wiki_doc2vec)
-    topic_words, topic_score = sentence_to_topicmodel_words(context, wiki_topicmodel)
+    # topic_words, topic_score = sentence_to_topicmodel_words(context, wiki_topicmodel)
 
     # Then try to generate sentences using these metrics
     output = []
