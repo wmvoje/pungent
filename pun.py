@@ -130,7 +130,7 @@ def generate_possible_pun_substitutions(context, input_sentence, w2v_number=5):
     # consider word2vec words
     list_of_words = []
     for i in range(w2v_number):
-        words, w2v_score = next(doc2vec_word_generator)
+        words, w2v_score, document_id = next(doc2vec_word_generator)
 
         # incoperate TF-IDF information
 
@@ -387,7 +387,7 @@ list_of_POS_to_ignore = ['WRB', 'WP$', 'WP',  'WDT', 'UH',
                          'DT', 'CD']
 
 # Function to remove stop words from sentences & lemmatize verbs.
-def tokenize(doc, stem=True, initial_word_split=True):
+def tokenize(doc, stem=True, initial_word_split=True, lemmatize=True):
     if initial_word_split:
         tokens = word_tokenize(doc)
     else:
@@ -401,7 +401,8 @@ def tokenize(doc, stem=True, initial_word_split=True):
     # lowercase
     tokens = [word.lower() for word in tokens]
     # lemmatized
-    tokens = [lemma.lemmatize(word, 'v') for word in tokens]
+    if lemmatize:
+        tokens = [lemma.lemmatize(word, 'v') for word in tokens]
     # removing short words
     tokens = [s for s in tokens if len(s) > 2]
     # stemmed
