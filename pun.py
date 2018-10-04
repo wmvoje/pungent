@@ -86,7 +86,7 @@ def sentence_to_doc2vec(text, model):
 
 
 
-        yield (words_with_tf_score, cosine_sim_score)
+        yield (words_with_tf_score, cosine_sim_score, document_id)
 
 
 def tf_idf_of_document(document_id, model, dictionary, corpus, tf_idf_cutoff=0.07):
