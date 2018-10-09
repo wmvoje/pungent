@@ -29,19 +29,11 @@ lemma = WordNetLemmatizer()
 
 phone_dict = nltk.corpus.cmudict.dict()
 
-# load in models and features
-
-wiki_topicmodel = Lda.load('models/180925_wikipedia_model.individually_binned.200.gensim.')
-
-# loading the stemmed_dict
-with open('180922_stemmed_dict.p', 'rb') as tounpick:
-    stemmed_dict = pickle.load(tounpick)
-
 # Loading the doc2vec
-wiki_doc2vec = doc2vec.Doc2Vec.load('models/simple_wiki_chunked_doc2vec_300_vector_10_min_word_800epochs')
+wiki_doc2vec = doc2vec.Doc2Vec.load('models/simple_wiki_chunked_word_limited_english_doc2vec_300_vector_10_min_word_epoch_400')
 
 # loading the doc2vec corpus
-with open('models/simple_wiki_chunked_corpus_10_count_cutoff.p', 'rb') as tounpcik:
+with open('models/simple_wiki_chunked_corpus_english_only_10_count_cutoff.p', 'rb') as tounpcik:
     wiki_doc2vec_corpus = pickle.load(tounpcik)
 
 # loading the TF-IDF information
@@ -66,15 +58,17 @@ def sentence_to_doc2vec(text, model):
     text = simple_preprocess(text)
     # print(text)
     # Find the respective doc2vec vector
-    text_vector = model.infer_vector(text, epochs=1000)
+    text_vector = model.infer_vector(text, epochs=2000)
     # find the most similar text pieces
     # print(text_vector)
     most_similar_documents_with_score = model.docvecs.most_similar([text_vector])
 
+    # print(most_similar_documents_with_score)
+
     # most_similar_documents_with_score.sort(key=lambda x: x[1])
     # most_similar_documents_with_score.reverse()
     # print(len(most_similar_documents_with_score))
-    # print(most_similar_documents_with_score)
+
 
     for document_id, cosine_sim_score in most_similar_documents_with_score:
 
@@ -82,14 +76,14 @@ def sentence_to_doc2vec(text, model):
 
         words_with_tf_score = tf_idf_of_document(document_id, tf_idf_model,
                                                  tf_idf_dict, tf_idf_corpus,
-                                                 tf_idf_cutoff=0.07)
+                                                 tf_idf_cutoff=0.05)
 
 
 
         yield (words_with_tf_score, cosine_sim_score, document_id)
 
 
-def tf_idf_of_document(document_id, model, dictionary, corpus, tf_idf_cutoff=0.07):
+def tf_idf_of_document(document_id, model, dictionary, corpus, tf_idf_cutoff=0.00007):
 
     # get the tf idf from the document id
     tf_idf = model[corpus[document_id]]
@@ -99,7 +93,7 @@ def tf_idf_of_document(document_id, model, dictionary, corpus, tf_idf_cutoff=0.0
 
     for index, tf_idf_value in tf_idf:
         if tf_idf_value > tf_idf_cutoff:
-            output.append((dictionary.id2token[index], tf_idf_value))
+            output.append((dictionary[index], tf_idf_value))
 
     return output
 
@@ -110,7 +104,7 @@ def split_text(string):
 
 
 
-def generate_possible_pun_substitutions(context, input_sentence, w2v_number=5):
+def generate_possible_pun_substitutions(context, input_sentence, w2v_number=3):
     """
     Takes context and input sentence
 

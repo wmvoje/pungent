@@ -81,7 +81,7 @@ def example1():
 
     context = "The domestic cat is a small, typically furry, carnivorous mammal. They are often called house cats when kept as indoor pets or simply cats when there is no need to distinguish them from other felines. They are often valued by humans for companionship and for their ability to hunt vermin. There are more than seventy cat breeds recognized by various cat registries."
 
-    input_sentence = "You look nice today!"
+    input_sentence = "You look nice!"
     return render_template('index.html',
                             title = title,
                             text_context=context,
@@ -126,8 +126,9 @@ def output():
 
         # Add a new request which reloads a website
         # if request.form['pun_selection'] == 'None':
-        return redirect(url_for('index', title="Let's try that PUNgain!",
-                                 context_text=request.args.get('context_text')))
+        return redirect(url_for('index', title="Thanks for your response!",
+                                 context_text=request.args.get('context_text'),
+                                 input_sentence=request.args.get('input_sentence')))
 
 
     context_text = request.args.get('context_text')
